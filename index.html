@@ -117,6 +117,27 @@ width:300px;
 background:#22c55e;
 }
 
+/* success popup */
+
+.successPopup{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:#22c55e;
+color:white;
+padding:18px;
+border-radius:10px;
+display:none;
+font-weight:bold;
+animation:pop 0.4s ease;
+}
+
+@keyframes pop{
+0%{transform:translate(-50%,-60%) scale(0.8)}
+100%{transform:translate(-50%,-50%) scale(1)}
+}
+
 </style>
 </head>
 
@@ -130,7 +151,7 @@ Welcome To Photo Tool World - Your Background Remover App
 
 <div class="container">
 
-<h2>Photo Tool World</h2>
+<h2>🦋 Photo Tool World 🦋</h2>
 
 <div class="wallet" id="wallet">
 Coins: <span id="coins">0</span>
@@ -144,8 +165,6 @@ Coins: <span id="coins">0</span>
 
 <img id="result">
 
-<button id="downloadSD" style="display:none" onclick="downloadSD()">Download SD</button>
-
 <button id="downloadHD" style="display:none" onclick="openPopup()">Download HD</button>
 
 </div>
@@ -157,6 +176,10 @@ Coins: <span id="coins">0</span>
 <button class="unlockBtn" onclick="buyHD()">Unlock Now</button>
 <button onclick="closePopup()">Cancel</button>
 </div>
+</div>
+
+<div class="successPopup" id="successMsg">
+Your photo has been sent to Photo Tool World Bot
 </div>
 
 <script>
@@ -180,7 +203,7 @@ let coin=document.createElement("div");
 coin.innerHTML="🪙";
 coin.className="coinFly";
 
-coin.style.left=Math.random()*100+"px";
+coin.style.left=Math.random()*120+"px";
 
 wallet.appendChild(coin);
 
@@ -203,7 +226,7 @@ async function removeBG(){
 
 let file=document.getElementById("upload").files[0];
 
-document.getElementById("status").innerHTML="Removing background...";
+document.getElementById("status").innerHTML="Removing Background...";
 
 let formData=new FormData();
 formData.append("image_file",file);
@@ -222,22 +245,14 @@ imageURL=URL.createObjectURL(imageBlob);
 
 document.getElementById("result").src=imageURL;
 
-document.getElementById("downloadSD").style.display="block";
+document.getElementById("status").innerHTML="";
+
 document.getElementById("downloadHD").style.display="block";
 
 coins+=10;
 saveCoins();
 
 flyCoins();
-
-}
-
-function downloadSD(){
-
-let a=document.createElement("a");
-a.href=imageURL;
-a.download="photo_sd.png";
-a.click();
 
 }
 
@@ -272,12 +287,15 @@ let img=new Image();
 img.onload=function(){
 
 let canvas=document.createElement("canvas");
-let ctx=canvas.getContext("2d",{alpha:true});
+let ctx=canvas.getContext("2d");
 
 canvas.width=img.width;
 canvas.height=img.height;
 
-ctx.clearRect(0,0,canvas.width,canvas.height);
+/* WHITE BACKGROUND */
+
+ctx.fillStyle="#ffffff";
+ctx.fillRect(0,0,canvas.width,canvas.height);
 
 ctx.imageSmoothingEnabled=true;
 ctx.imageSmoothingQuality="high";
@@ -313,9 +331,17 @@ method:"POST",
 body:formData
 });
 
+let msg=document.getElementById("successMsg");
+msg.style.display="block";
+
+setTimeout(()=>{
+msg.style.display="none";
+},3000);
+
 }
 
 </script>
 
 </body>
 </html>
+
