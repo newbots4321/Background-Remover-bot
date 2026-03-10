@@ -2,98 +2,45 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Photo Tool World</title>
+<title>BG Remover</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 
 body{
-background:#0f172a;
 font-family:Arial;
+background:#0f172a;
 color:white;
 text-align:center;
-margin:0;
-}
-
-.header{
-background:#111827;
-padding:10px;
-overflow:hidden;
-font-weight:bold;
-}
-
-.marquee{
-white-space:nowrap;
-display:inline-block;
-animation:scroll 12s linear infinite,rainbow 6s linear infinite;
-}
-
-@keyframes scroll{
-0%{transform:translateX(100%)}
-100%{transform:translateX(-100%)}
-}
-
-@keyframes rainbow{
-0%{color:red}
-20%{color:orange}
-40%{color:yellow}
-60%{color:lime}
-80%{color:cyan}
-100%{color:magenta}
-}
-
-.container{
-max-width:420px;
-margin:auto;
 padding:20px;
 }
 
-.wallet{
+.box{
 background:#1e293b;
-padding:12px;
-border-radius:10px;
-margin-bottom:20px;
-font-size:18px;
-position:relative;
-}
-
-.coinFly{
-position:absolute;
-font-size:20px;
-animation:fly 1s ease forwards;
-}
-
-@keyframes fly{
-0%{transform:translateY(80px);opacity:1}
-100%{transform:translateY(0);opacity:0}
-}
-
-.bigUpload{
-width:100%;
 padding:20px;
-font-size:18px;
-background:#22c55e;
-border:none;
-border-radius:12px;
-color:white;
+border-radius:15px;
 }
 
 button{
-width:100%;
-padding:14px;
-margin-top:10px;
+padding:12px 20px;
 border:none;
 border-radius:10px;
-background:#3b82f6;
+background:#22c55e;
 color:white;
 font-size:16px;
+margin-top:10px;
+cursor:pointer;
 }
 
-img{
-max-width:100%;
-margin-top:15px;
-border-radius:10px;
+#downloadBtn{
+background:#3b82f6;
+display:none;
+}
+
+.coin{
+font-size:20px;
+margin-bottom:10px;
 }
 
 .popup{
@@ -102,34 +49,16 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.7);
+background:rgba(0,0,0,0.8);
 display:none;
-align-items:center;
 justify-content:center;
+align-items:center;
 }
 
-.popupBox{
+.popup-box{
 background:#111827;
 padding:25px;
-border-radius:12px;
-width:300px;
-}
-
-.unlockBtn{
-background:#22c55e;
-}
-
-.successPopup{
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:#22c55e;
-color:white;
-padding:18px;
-border-radius:10px;
-display:none;
-font-weight:bold;
+border-radius:15px;
 }
 
 </style>
@@ -137,211 +66,130 @@ font-weight:bold;
 
 <body>
 
-<div class="header">
-<div class="marquee">
-Welcome To Photo Tool World - Your Background Remover App
-</div>
-</div>
+<div class="box">
 
-<div class="container">
+<h2>AI Background Remover</h2>
 
-<h2>Photo Tool World</h2>
-
-<div class="wallet" id="wallet">
+<div class="coin">
 Coins: <span id="coins">0</span>
 </div>
 
-<button class="bigUpload" onclick="openUpload()">Upload Photo</button>
+<input type="file" id="upload">
 
-<input type="file" id="upload" accept="image/*" style="display:none" onchange="removeBG()">
+<br>
 
-<div id="status"></div>
+<button onclick="removeBG()">Remove Background</button>
 
-<img id="result">
+<br>
 
-<button id="downloadHD" style="display:none" onclick="openPopup()">Download HD</button>
+<img id="preview" width="250">
+
+<br>
+
+<button id="downloadBtn" onclick="showPopup()">Download HD</button>
 
 </div>
+
+<!-- popup -->
 
 <div class="popup" id="popup">
-<div class="popupBox">
-<h3>Unlock HD Download</h3>
-<p>This feature costs 10 coins</p>
-<button class="unlockBtn" onclick="buyHD()">Unlock</button>
+
+<div class="popup-box">
+
+<h3>Unlock HD</h3>
+
+<p>Use 10 Coins</p>
+
+<button onclick="unlockDownload()">Unlock</button>
+
 <button onclick="closePopup()">Cancel</button>
-</div>
+
 </div>
 
-<div class="successPopup" id="successMsg">
-Photo sent to your Photo Tool World Bot
 </div>
 
 <script>
 
-const tg = window.Telegram.WebApp;
-tg.expand();
+let coins = localStorage.getItem("coins") || 0
+document.getElementById("coins").innerText = coins
 
-let userId = tg.initDataUnsafe?.user?.id || null;
+let resultImage = ""
 
-let coins=localStorage.getItem("coins")||0;
-coins=parseInt(coins);
-document.getElementById("coins").innerText=coins;
+function removeBG(){
 
-function saveCoins(){
-localStorage.setItem("coins",coins);
-document.getElementById("coins").innerText=coins;
-}
+let file = document.getElementById("upload").files[0]
 
-function flyCoins(){
+let formData = new FormData()
+formData.append("image_file", file)
 
-let wallet=document.getElementById("wallet");
-
-for(let i=0;i<8;i++){
-
-let coin=document.createElement("div");
-coin.innerHTML="🪙";
-coin.className="coinFly";
-
-coin.style.left=Math.random()*120+"px";
-
-wallet.appendChild(coin);
-
-setTimeout(()=>coin.remove(),1000)
-
-}
-
-}
-
-function openUpload(){
-document.getElementById("upload").click();
-}
-
-let imageBlob=null;
-let imageURL="";
-
-async function removeBG(){
-
-let file=document.getElementById("upload").files[0];
-
-if(!file)return;
-
-document.getElementById("status").innerHTML="Removing Background...";
-
-let formData=new FormData();
-formData.append("image_file",file);
-formData.append("size","auto");
-
-try{
-
-let res=await fetch("https://api.remove.bg/v1.0/removebg",{
+fetch("https://api.remove.bg/v1.0/removebg", {
 method:"POST",
 headers:{
 "X-Api-Key":"GycHN7qSDN9SUqvUkogEnoVb"
 },
 body:formData
-});
+})
+.then(res=>res.blob())
+.then(blob=>{
 
-if(!res.ok){
-throw new Error("Background remove failed");
-}
+resultImage = URL.createObjectURL(blob)
 
-imageBlob=await res.blob();
-imageURL=URL.createObjectURL(imageBlob);
+document.getElementById("preview").src = resultImage
 
-document.getElementById("result").src=imageURL;
+document.getElementById("downloadBtn").style.display="inline-block"
 
-document.getElementById("status").innerHTML="";
+coins = parseInt(coins) + 10
+localStorage.setItem("coins",coins)
 
-document.getElementById("downloadHD").style.display="block";
+document.getElementById("coins").innerText = coins
 
-coins+=10;
-saveCoins();
-flyCoins();
-
-}catch(e){
-
-document.getElementById("status").innerHTML="Failed to remove background";
+})
 
 }
 
-}
+function showPopup(){
 
-function openPopup(){
-document.getElementById("popup").style.display="flex";
+document.getElementById("popup").style.display="flex"
+
 }
 
 function closePopup(){
-document.getElementById("popup").style.display="none";
-}
 
-function buyHD(){
-
-if(coins<10){
-alert("Not enough coins");
-return;
-}
-
-coins-=10;
-saveCoins();
-
-downloadWhite();
-
-closePopup();
+document.getElementById("popup").style.display="none"
 
 }
 
-function downloadWhite(){
+function unlockDownload(){
 
-let img=new Image();
+if(coins < 10){
 
-img.onload=function(){
+alert("Not enough coins")
 
-let canvas=document.createElement("canvas");
-let ctx=canvas.getContext("2d");
-
-canvas.width=img.width;
-canvas.height=img.height;
-
-ctx.fillStyle="#ffffff";
-ctx.fillRect(0,0,canvas.width,canvas.height);
-
-ctx.drawImage(img,0,0);
-
-let hd=canvas.toDataURL("image/png");
-
-let a=document.createElement("a");
-a.href=hd;
-a.download="photo_hd.png";
-a.click();
-
-sendToTelegram();
+return
 
 }
 
-img.src=imageURL;
+coins = coins - 10
+localStorage.setItem("coins",coins)
 
-}
+document.getElementById("coins").innerText = coins
 
-async function sendToTelegram(){
+// download
 
-if(!userId)return;
+let a = document.createElement("a")
+a.href = resultImage
+a.download="bg_removed.png"
+a.click()
 
-let formData=new FormData();
+// open adsterra
 
-formData.append("chat_id",userId);
-formData.append("photo",imageBlob);
+window.open("https://www.effectivegatecpm.com/bupvhwz5?key=eaedd439f3f1d2db330f017cf0cb29ca")
 
-await fetch("https://api.telegram.org/bot8226940478:AAHrxtf_D6i6sO1OSH23RQEzap7hWa0n860/sendPhoto",{
-method:"POST",
-body:formData
-});
+// send photo telegram chat
 
-let msg=document.getElementById("successMsg");
-msg.style.display="block";
+Telegram.WebApp.sendData(resultImage)
 
-setTimeout(()=>{
-msg.style.display="none";
-},3000);
+closePopup()
 
 }
 
