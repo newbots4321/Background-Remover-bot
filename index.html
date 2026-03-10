@@ -53,6 +53,18 @@ padding:12px;
 border-radius:10px;
 margin-bottom:20px;
 font-size:18px;
+position:relative;
+}
+
+.coinFly{
+position:absolute;
+font-size:20px;
+animation:fly 1s ease forwards;
+}
+
+@keyframes fly{
+0%{transform:translateY(80px);opacity:1}
+100%{transform:translateY(0);opacity:0}
 }
 
 .bigUpload{
@@ -120,7 +132,7 @@ Welcome To Photo Tool World - Your Background Remover App
 
 <h2>Photo Tool World</h2>
 
-<div class="wallet">
+<div class="wallet" id="wallet">
 Coins: <span id="coins">0</span>
 </div>
 
@@ -158,6 +170,28 @@ localStorage.setItem("coins",coins);
 document.getElementById("coins").innerText=coins;
 }
 
+function flyCoins(){
+
+let wallet=document.getElementById("wallet");
+
+for(let i=0;i<8;i++){
+
+let coin=document.createElement("div");
+coin.innerHTML="🪙";
+coin.className="coinFly";
+
+coin.style.left=Math.random()*100+"px";
+
+wallet.appendChild(coin);
+
+setTimeout(()=>{
+coin.remove();
+},1000)
+
+}
+
+}
+
 function openUpload(){
 document.getElementById("upload").click();
 }
@@ -193,6 +227,8 @@ document.getElementById("downloadHD").style.display="block";
 
 coins+=10;
 saveCoins();
+
+flyCoins();
 
 }
 
@@ -236,10 +272,12 @@ let img=new Image();
 img.onload=function(){
 
 let canvas=document.createElement("canvas");
-let ctx=canvas.getContext("2d");
+let ctx=canvas.getContext("2d",{alpha:true});
 
 canvas.width=img.width;
 canvas.height=img.height;
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
 
 ctx.imageSmoothingEnabled=true;
 ctx.imageSmoothingQuality="high";
