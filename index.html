@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>🌼Photo Tool World🌼</title>
+<title>Photo Tool World</title>
 
 <style>
 
@@ -17,7 +17,6 @@ margin:0;
 .header{
 background:#111827;
 padding:10px;
-font-size:16px;
 font-weight:bold;
 overflow:hidden;
 }
@@ -26,8 +25,6 @@ overflow:hidden;
 white-space:nowrap;
 display:inline-block;
 animation:scrollText 12s linear infinite, rainbow 6s linear infinite;
-font-weight:bold;
-font-size:16px;
 }
 
 @keyframes scrollText{
@@ -146,8 +143,6 @@ flex:1;
 background:#ef4444;
 }
 
-/* Circular sticky share button */
-
 .shareBtn{
 position:fixed;
 bottom:20px;
@@ -235,12 +230,7 @@ Download HD (10 🪙)
 
 <script>
 
-let coins = localStorage.getItem("coins");
-
-if(!coins){
-coins = 0;
-}
-
+let coins = localStorage.getItem("coins") || 0;
 coins = parseInt(coins);
 
 document.getElementById("coins").innerText = coins;
@@ -251,22 +241,15 @@ document.getElementById("coins").innerText = coins;
 }
 
 function coinAnimation(){
-
 for(let i=0;i<25;i++){
-
 let coin=document.createElement("div");
 coin.className="coin";
 coin.innerText="🪙";
-
 coin.style.left=(window.innerWidth/2+(Math.random()*120-60))+"px";
 coin.style.top=(window.innerHeight/2+(Math.random()*60-30))+"px";
-
 document.body.appendChild(coin);
-
 setTimeout(()=>coin.remove(),1200);
-
 }
-
 }
 
 function openUpload(){
@@ -288,22 +271,16 @@ formData.append("size","auto");
 
 setTimeout(async()=>{
 
-let res=await fetch(
-"https://api.remove.bg/v1.0/removebg",
-{
+let res=await fetch("https://api.remove.bg/v1.0/removebg",{
 method:"POST",
-headers:{
-"X-Api-Key":"GycHN7qSDN9SUqvUkogEnoVb"
-},
+headers:{ "X-Api-Key":"GycHN7qSDN9SUqvUkogEnoVb" },
 body:formData
 });
 
 let blob=await res.blob();
-
 imageURL=URL.createObjectURL(blob);
 
 document.getElementById("result").src=imageURL;
-
 document.getElementById("status").innerHTML="";
 
 document.getElementById("downloadSD").style.display="block";
@@ -317,28 +294,19 @@ coinAnimation();
 
 }
 
+function downloadFile(url,name){
+fetch(url)
+.then(res=>res.blob())
+.then(blob=>{
+let link=document.createElement("a");
+link.href=URL.createObjectURL(blob);
+link.download=name;
+link.click();
+});
+}
+
 function downloadSD(){
-
-let img=new Image();
-
-img.onload=function(){
-
-let canvas=document.createElement("canvas");
-canvas.width=img.width/2;
-canvas.height=img.height/2;
-
-let ctx=canvas.getContext("2d");
-ctx.drawImage(img,0,0,canvas.width,canvas.height);
-
-let a=document.createElement("a");
-a.href=canvas.toDataURL("image/png",0.7);
-a.download="photo_SD.png";
-a.click();
-
-};
-
-img.src=imageURL;
-
+downloadFile(imageURL,"photo_SD.png");
 }
 
 function showHDPopup(){
@@ -359,33 +327,33 @@ return;
 
 coins-=10;
 saveCoins();
-
 closePopup();
 
-let a=document.createElement("a");
-a.href=imageURL;
-a.download="photo_HD.png";
-a.click();
+downloadFile(imageURL,"photo_HD.png");
 
 setTimeout(()=>{
 window.open("https://www.effectivegatecpm.com/bupvhwz5?key=eaedd439f3f1d2db330f017cf0cb29ca");
-},500);
+},800);
 
 }
 
 function shareApp(){
 
-let shareData={
-title:"Photo Tool World",
-text:"🌼Remove Photo Background in 3 seconds 🌼",
-url:"https://t.me/PhotoToolWorld_bot"
-};
+let url="https://t.me/PhotoToolWorld_bot";
+
+if(window.Telegram && Telegram.WebApp){
+Telegram.WebApp.openTelegramLink("https://t.me/share/url?url="+url);
+return;
+}
 
 if(navigator.share){
-navigator.share(shareData);
+navigator.share({
+title:"Photo Tool World",
+text:"Remove photo background in seconds",
+url:url
+});
 }else{
-navigator.clipboard.writeText(shareData.url);
-alert("Link copied, share with friends!");
+window.open("https://t.me/share/url?url="+url);
 }
 
 }
