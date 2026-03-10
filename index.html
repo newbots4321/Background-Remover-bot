@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>🌼Photo Tool World🌼</title>
+
+<style>
+
+body{
+background:#0f172a;
+font-family:Arial;
+color:white;
+text-align:center;
+margin:0;
+}
+
+.header{
+background:#111827;
+padding:10px;
+font-size:16px;
+font-weight:bold;
+overflow:hidden;
+}
+
+.marquee{
+white-space:nowrap;
+display:inline-block;
+animation:scrollText 12s linear infinite, rainbow 6s linear infinite;
+font-weight:bold;
+font-size:16px;
+}
+
+@keyframes scrollText{
+0%{transform:translateX(100%)}
+100%{transform:translateX(-100%)}
+}
+
+@keyframes rainbow{
+0%{color:red}
+16%{color:orange}
+32%{color:yellow}
+48%{color:lime}
+64%{color:cyan}
+80%{color:blue}
+100%{color:magenta}
+}
+
+.container{
+max-width:420px;
+margin:auto;
+padding:20px;
+}
+
+.wallet{
+background:#1e293b;
+padding:12px;
+border-radius:10px;
+margin-bottom:20px;
+font-size:18px;
+}
+
+.bigUpload{
+width:100%;
+padding:22px;
+font-size:18px;
+background:#22c55e;
+border:none;
+border-radius:12px;
+color:white;
+margin-bottom:15px;
+}
+
+button{
+width:100%;
+padding:14px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+background:#3b82f6;
+color:white;
+font-size:16px;
+}
+
+img{
+max-width:100%;
+margin-top:15px;
+border-radius:10px;
+}
+
+.loading{
+margin-top:15px;
+font-size:18px;
+animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+0%{opacity:0.3}
+50%{opacity:1}
+100%{opacity:0.3}
+}
+
+.coin{
+position:fixed;
+font-size:22px;
+pointer-events:none;
+animation:flyCoin 1.2s forwards;
+}
+
+@keyframes flyCoin{
+0%{transform:translate(0,0);opacity:1}
+100%{transform:translate(-120px,-250px);opacity:0}
+}
+
+.popup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.popup-box{
+background:#1e293b;
+padding:25px;
+border-radius:15px;
+width:85%;
+max-width:320px;
+text-align:center;
+}
+
+.popup-buttons{
+display:flex;
+gap:10px;
+margin-top:15px;
+}
+
+.popup-buttons button{
+flex:1;
+}
+
+.cancel{
+background:#ef4444;
+}
+
+/* Circular sticky share button */
+
+.shareBtn{
+position:fixed;
+bottom:20px;
+right:20px;
+width:60px;
+height:60px;
+border-radius:50%;
+background:#22c55e;
+border:none;
+font-size:24px;
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+box-shadow:0 0 12px rgba(0,0,0,0.6);
+z-index:999;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<div class="marquee">
+Welcome To Photo Tool World - Your Background Remover App
+</div>
+</div>
+
+<div class="container">
+
+<h2>🦋 Photo Tool World 🦋</h2>
+
+<div class="wallet">
+🪙 Coins: <span id="coins">0</span>
+</div>
+
+<button class="bigUpload" onclick="openUpload()">
+📸 Upload Photo
+</button>
+
+<input type="file"
+id="upload"
+accept="image/*"
+style="display:none"
+onchange="removeBG()">
+
+<div id="status"></div>
+
+<img id="result">
+
+<button id="downloadSD" style="display:none" onclick="downloadSD()">
+Download SD (Free)
+</button>
+
+<button id="downloadHD" style="display:none" onclick="showHDPopup()">
+Download HD (10 🪙)
+</button>
+
+</div>
+
+<div class="popup" id="hdPopup">
+
+<div class="popup-box">
+
+<h3>Unlock HD Download</h3>
+
+<p>Use <b>10 🪙 coins</b> to download this image in HD quality.</p>
+
+<p>Your Coins: <span id="popupCoins">0</span></p>
+
+<div class="popup-buttons">
+
+<button class="cancel" onclick="closePopup()">Cancel</button>
+
+<button onclick="confirmHD()">Unlock HD</button>
+
+</div>
+
+</div>
+
+</div>
+
+<button class="shareBtn" onclick="shareApp()">🔗</button>
+
+<script>
+
+let coins = localStorage.getItem("coins");
+
+if(!coins){
+coins = 0;
+}
+
+coins = parseInt(coins);
+
+document.getElementById("coins").innerText = coins;
+
+function saveCoins(){
+localStorage.setItem("coins",coins);
+document.getElementById("coins").innerText = coins;
+}
+
+function coinAnimation(){
+
+for(let i=0;i<25;i++){
+
+let coin=document.createElement("div");
+coin.className="coin";
+coin.innerText="🪙";
+
+coin.style.left=(window.innerWidth/2+(Math.random()*120-60))+"px";
+coin.style.top=(window.innerHeight/2+(Math.random()*60-30))+"px";
+
+document.body.appendChild(coin);
+
+setTimeout(()=>coin.remove(),1200);
+
+}
+
+}
+
+function openUpload(){
+document.getElementById("upload").click();
+}
+
+let imageURL="";
+
+async function removeBG(){
+
+let file=document.getElementById("upload").files[0];
+if(!file) return;
+
+document.getElementById("status").innerHTML='<div class="loading">Removing background...</div>';
+
+let formData=new FormData();
+formData.append("image_file",file);
+formData.append("size","auto");
+
+setTimeout(async()=>{
+
+let res=await fetch(
+"https://api.remove.bg/v1.0/removebg",
+{
+method:"POST",
+headers:{
+"X-Api-Key":"GycHN7qSDN9SUqvUkogEnoVb"
+},
+body:formData
+});
+
+let blob=await res.blob();
+
+imageURL=URL.createObjectURL(blob);
+
+document.getElementById("result").src=imageURL;
+
+document.getElementById("status").innerHTML="";
+
+document.getElementById("downloadSD").style.display="block";
+document.getElementById("downloadHD").style.display="block";
+
+coins+=10;
+saveCoins();
+coinAnimation();
+
+},3000);
+
+}
+
+function downloadSD(){
+
+let img=new Image();
+
+img.onload=function(){
+
+let canvas=document.createElement("canvas");
+canvas.width=img.width/2;
+canvas.height=img.height/2;
+
+let ctx=canvas.getContext("2d");
+ctx.drawImage(img,0,0,canvas.width,canvas.height);
+
+let a=document.createElement("a");
+a.href=canvas.toDataURL("image/png",0.7);
+a.download="photo_SD.png";
+a.click();
+
+};
+
+img.src=imageURL;
+
+}
+
+function showHDPopup(){
+document.getElementById("popupCoins").innerText=coins;
+document.getElementById("hdPopup").style.display="flex";
+}
+
+function closePopup(){
+document.getElementById("hdPopup").style.display="none";
+}
+
+function confirmHD(){
+
+if(coins<10){
+alert("Not enough coins");
+return;
+}
+
+coins-=10;
+saveCoins();
+
+closePopup();
+
+let a=document.createElement("a");
+a.href=imageURL;
+a.download="photo_HD.png";
+a.click();
+
+setTimeout(()=>{
+window.open("https://www.effectivegatecpm.com/bupvhwz5?key=eaedd439f3f1d2db330f017cf0cb29ca");
+},500);
+
+}
+
+function shareApp(){
+
+let shareData={
+title:"Photo Tool World",
+text:"🌼Remove Photo Background🌼 in 3 seconds!",
+url:"https://t.me/PhotoToolWorld_bot"
+};
+
+if(navigator.share){
+navigator.share(shareData);
+}else{
+navigator.clipboard.writeText(shareData.url);
+alert("Link copied, share with friends!");
+}
+
+}
+
+</script>
+
+</body>
+</html>
